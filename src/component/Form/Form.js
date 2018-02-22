@@ -1,10 +1,15 @@
 import React, { Component } from 'react';
+import Day from '../Day/Day';
 
 class Form extends Component {
     constructor() {
         super();
         this.state = {
             weather: [],
+            wind: [],
+            main: [],
+            sys: [],
+            forecast: [],
             selectedOption: "metric"
         }
     }
@@ -13,8 +18,12 @@ class Form extends Component {
         this.setState({
             selectedOption: event.target.value
         });
+
         const degrees = event.target.value;
-        const cityName = event.nativeEvent.target.parentElement.parentElement.elements[0].value
+        const cityName = event.nativeEvent.target.parentElement.parentElement.elements[0].value;
+        const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather?q='+ cityName + '&units='+ degrees + '&APPID=5434f1c129e1ac657b10a23c1ac6a1e9';
+        const foreCastUrl = 'https://api.openweathermap.org/data/2.5/forecast/?q=' + cityName + '&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units='+ degrees;
+
         fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=${degrees}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9`)
             .then(res => res.json())
             .then(res => {
@@ -26,7 +35,18 @@ class Form extends Component {
                 }, function () {
                     console.log(this.state.weather);
                 });
+            }); //Promise.all([url1,url2]).then()
+        fetch(`https://api.openweathermap.org/data/2.5/forecast/?q=${cityName}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units=${degrees}`)
+        .then(this.handleErrors)
+        .then(res => res.json())
+        .then(res => {
+            this.setState({
+            forecast: res.list
             });
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
     }
 
     onSubmit(e) {
@@ -53,9 +73,20 @@ class Form extends Component {
                     main: res.main,
                     sys: res.sys
                 }, function () {
-                    console.log(this.state.weather);
+                    console.log(this.state);
                 });
             });
+
+        fetch(`https://api.openweathermap.org/data/2.5/forecast/?q=${cityName}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units=${degrees}`)
+            .then(res => res.json())
+            .then(res => {
+                this.setState({
+                    forecast: res.list
+            }, function () {
+                console.log(this.state.forecast);
+            });
+        });
+            
     }
 
     render() {
@@ -90,10 +121,17 @@ class Form extends Component {
                 </p>
                 <table className="table table-bordered">
                     <tbody>
-                        <tr>
-                            <td>Wind</td>
-                            <td>{this.state.wind.speed} m/s</td>
-                        </tr>
+                        {this.state.selectedOption === 'metric' ? (
+                            <tr>
+                                <td>Wind</td>
+                                <td>{this.state.wind.speed} meters per second</td>
+                            </tr>
+                            ) : (
+                            <tr>
+                                <td>Wind</td>
+                                <td>{this.state.wind.speed} miles per hour</td>
+                            </tr>
+                            )}
                         <tr>
                             <td>Humidity</td>
                             <td>{this.state.main.humidity}%</td>
@@ -111,8 +149,19 @@ class Form extends Component {
               </div>
               : <p>No results yet</p>
             }
-          </div>
-        );
+            { this.state.forecast && this.state.forecast.length > 0 ?
+            <div className="App-forecast">
+            <h2 className="h2">Weather forecast for 5 days</h2>
+                {
+                this.state.forecast.map((interval, index) => { 
+                    return <Day key={index} interval={interval} />
+                })
+                }
+            </div>
+            : ''
+            }
+            </div>
+            );
     }
     
     calculateTime(time) {
