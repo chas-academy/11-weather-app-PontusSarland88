@@ -10,7 +10,10 @@ class Form extends Component {
             main: [],
             sys: [],
             forecast: [],
-            selectedOption: "metric"
+            selectedOption: "metric",
+            latitude: 0,
+            longitude: 0,
+            posWeather: {}
         }
     }
 
@@ -35,7 +38,8 @@ class Form extends Component {
                 }, function () {
                     console.log(this.state.weather);
                 });
-            }); //Promise.all([url1,url2]).then()
+            });
+
         fetch(`https://api.openweathermap.org/data/2.5/forecast/?q=${cityName}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units=${degrees}`)
         .then(this.handleErrors)
         .then(res => res.json())
@@ -45,22 +49,13 @@ class Form extends Component {
             });
         })
         .catch(function(error) {
-            console.log(error);
+            //console.log(error);
         });
     }
 
     onSubmit(e) {
         e.preventDefault();
-        // if ("geolocation" in navigator) {debugger;
-        //     navigator.geolocation.getCurrentPosition(function(position) {
-        //         let lat = position.coords.latitude; 
-        //         let long = position.coords.longitude;
-        //       });
-        //     let geo = navigator.geolocation;
-        //   } else {
-        //     /* geolocation IS NOT available */
-        //   }
-        
+
         const cityName = e.nativeEvent.target.elements[0].value;
         const degrees = this.state.selectedOption;
 
@@ -73,7 +68,7 @@ class Form extends Component {
                     main: res.main,
                     sys: res.sys
                 }, function () {
-                    console.log(this.state);
+                    console.log(this.state.sys);
                 });
             });
 
@@ -83,10 +78,21 @@ class Form extends Component {
                 this.setState({
                     forecast: res.list
             }, function () {
-                console.log(this.state.forecast);
+                //console.log(this.state.forecast);
             });
         });
-            
+
+        if((this.state.longitude && this.state.latitude) !== 0) {
+            fetch(`http://api.openweathermap.org/data/2.5/weather?lat=${this.state.latitude}&lon=${this.state.longitude}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units=${degrees}`)
+                .then(res => res.json())
+                .then(res => {
+                    this.setState({
+                        posWeather: res
+                }, function () {
+                    console.log(this.state.posWeather);
+                });
+            });
+        }
     }
 
     render() {
@@ -96,59 +102,87 @@ class Form extends Component {
               <input className="form-control" type="text" placeholder="Type the city name here" name="city" />
               <button className="btn btn-primary" type="submit">Get weather</button>
               <div className="form-group ">
-                <input name="group100" type="radio" id="radio100" value="metric" checked={this.state.selectedOption === 'metric'} onChange={this.handleOptionChange.bind(this)}/>
+                <input name="group100" type="radio" value="metric" checked={this.state.selectedOption === 'metric'} onChange={this.handleOptionChange.bind(this)}/>
                 <label>Celcius</label>
-                <input name="group100" type="radio" id="radio101" value="imperial" checked={this.state.selectedOption === 'imperial'} onChange={this.handleOptionChange.bind(this)}/>
+                <input name="group100" type="radio" value="imperial" checked={this.state.selectedOption === 'imperial'} onChange={this.handleOptionChange.bind(this)}/>
                 <label>Farenheit</label>
             </div>
             </form>
-            {this.state.weather && this.state.weather.length > 0 ? 
-              <div className="App-weather">
-                <img src={`http://openweathermap.org/img/w/${this.state.weather[0].icon}.png`} title="Title goes here" alt="A weather icon, describing the... weather" />
-                {this.state.selectedOption === 'metric' ? (
-                    <p>
-                        {this.state.main.temp} Celcius
-                        <br/>
-                    </p>
-                ) : (
-                    <p>
-                        {this.state.main.temp} Farenheit
-                        <br/>
-                    </p>
-                )}
-                <p>
-                  {this.state.weather[0].description}
-                </p>
-                <table className="table table-bordered">
+            <div className=" container row">
+                {(this.state.posWeather.main ? (
+                    <table className="table table-bordered">
                     <tbody>
-                        {this.state.selectedOption === 'metric' ? (
-                            <tr>
-                                <td>Wind</td>
-                                <td>{this.state.wind.speed} meters per second</td>
-                            </tr>
-                            ) : (
-                            <tr>
-                                <td>Wind</td>
-                                <td>{this.state.wind.speed} miles per hour</td>
-                            </tr>
-                            )}
+                        <h4>Weather in {this.state.posWeather.name}</h4>
+                        <tr>
+                            <td></td>
+                            <td>{this.state.posWeather.name} miles per hour</td>
+                        </tr>
                         <tr>
                             <td>Humidity</td>
                             <td>{this.state.main.humidity}%</td>
                         </tr>
                         <tr>
                             <td>Sunrise</td>
-                            <td>{this.calculateTime(this.state.sys.sunrise)}</td>
+                            <td></td>
                         </tr>
                         <tr>
                             <td>Sunset</td>
-                            <td>{this.calculateTime(this.state.sys.sunset)}</td>
+                            <td></td>
                         </tr>
                     </tbody>
                 </table>
-              </div>
-              : <p>No results yet</p>
-            }
+                ) : (
+                    ""
+                ))}
+                {this.state.weather && this.state.weather.length > 0 ? 
+                <div className="App-weather">
+                <h2 className="h2">Weather right now</h2>
+                    <img src={`http://openweathermap.org/img/w/${this.state.weather[0].icon}.png`} title="Title goes here" alt="A weather icon, describing the... weather" />
+                    {this.state.selectedOption === 'metric' ? (
+                        <p>
+                            {this.state.main.temp} Celcius
+                            <br/>
+                        </p>
+                    ) : (
+                        <p>
+                            {this.state.main.temp} Farenheit
+                            <br/>
+                        </p>
+                    )}
+                    <p>
+                    {this.state.weather[0].description}
+                    </p>
+                    <table className="table table-bordered">
+                        <tbody>
+                            {this.state.selectedOption === 'metric' ? (
+                                <tr>
+                                    <td>Wind</td>
+                                    <td>{this.state.wind.speed} meters per second</td>
+                                </tr>
+                                ) : (
+                                <tr>
+                                    <td>Wind</td>
+                                    <td>{this.state.wind.speed} miles per hour</td>
+                                </tr>
+                                )}
+                            <tr>
+                                <td>Humidity</td>
+                                <td>{this.state.main.humidity}%</td>
+                            </tr>
+                            <tr>
+                                <td>Sunrise</td>
+                                <td>{this.calculateTime(this.state.sys.sunrise)}</td>
+                            </tr>
+                            <tr>
+                                <td>Sunset</td>
+                                <td>{this.calculateTime(this.state.sys.sunset)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                : <p>No results yet</p>
+                }
+            </div>
             { this.state.forecast && this.state.forecast.length > 0 ?
             <div className="App-forecast">
             <h2 className="h2">Weather forecast for 5 days</h2>
@@ -166,6 +200,15 @@ class Form extends Component {
     
     calculateTime(time) {
         return new Date(time * 1e3).toISOString().slice(-13, -5);
+    }
+
+    componentDidMount() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            this.setState({
+                longitude: pos.coords.longitude.toFixed(5),
+                latitude: pos.coords.latitude.toFixed(5)
+            })
+        });
     }
 }
  
