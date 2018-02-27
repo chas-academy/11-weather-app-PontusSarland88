@@ -35,8 +35,6 @@ class Form extends Component {
                     wind: res.wind,
                     main: res.main,
                     sys: res.sys
-                }, function () {
-                    console.log(this.state.weather);
                 });
             });
 
@@ -47,10 +45,17 @@ class Form extends Component {
             this.setState({
             forecast: res.list
             });
-        })
-        .catch(function(error) {
-            //console.log(error);
         });
+        
+        if((this.state.longitude && this.state.latitude) !== 0) {
+            fetch(`http://api.openweathermap.org/data/2.5/weather?lat=${this.state.latitude}&lon=${this.state.longitude}&APPID=5434f1c129e1ac657b10a23c1ac6a1e9&units=${degrees}`)
+                .then(res => res.json())
+                .then(res => {
+                    this.setState({
+                        posWeather: res
+                });
+            });
+        }
     }
 
     onSubmit(e) {
@@ -67,8 +72,6 @@ class Form extends Component {
                     wind: res.wind,
                     main: res.main,
                     sys: res.sys
-                }, function () {
-                    console.log(this.state.sys);
                 });
             });
 
@@ -77,8 +80,6 @@ class Form extends Component {
             .then(res => {
                 this.setState({
                     forecast: res.list
-            }, function () {
-                //console.log(this.state.forecast);
             });
         });
 
@@ -88,8 +89,6 @@ class Form extends Component {
                 .then(res => {
                     this.setState({
                         posWeather: res
-                }, function () {
-                    console.log(this.state.posWeather);
                 });
             });
         }
@@ -108,26 +107,26 @@ class Form extends Component {
                 <label>Farenheit</label>
             </div>
             </form>
-            <div className=" container row">
+            <div className="container row">
                 {(this.state.posWeather.main ? (
-                    <table className="table table-bordered">
+                <table className="table table-bordered">
                     <tbody>
-                        <h4>Weather in {this.state.posWeather.name}</h4>
+                        <td>Weather rigt now in {this.state.posWeather.name}</td>
                         <tr>
-                            <td></td>
-                            <td>{this.state.posWeather.name} miles per hour</td>
+                            <td>Temperature</td>
+                            <td>{this.state.posWeather.main.temp}</td>
+                        </tr>
+                        <tr>
+                            <img src={`http://openweathermap.org/img/w/${this.state.posWeather.weather[0].icon}.png`} title="Title goes here" alt="A weather icon, describing the... weather" />
+                            <td>{this.state.posWeather.weather[0].description}</td>
                         </tr>
                         <tr>
                             <td>Humidity</td>
                             <td>{this.state.main.humidity}%</td>
                         </tr>
                         <tr>
-                            <td>Sunrise</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Sunset</td>
-                            <td></td>
+                            <td>Wind</td>
+                            <td>{this.state.wind.speed}</td>
                         </tr>
                     </tbody>
                 </table>
